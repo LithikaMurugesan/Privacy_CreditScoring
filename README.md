@@ -241,36 +241,4 @@ These heterogeneous distributions create the Non-IID challenge that FedProx addr
 
 ---
 
-## Academic References
 
-1. McMahan et al. (2017) — *Communication-Efficient Learning of Deep Networks from Decentralized Data* [FedAvg]
-2. Li et al. (2020) — *Federated Optimization in Heterogeneous Networks* [FedProx]
-3. Abadi et al. (2016) — *Deep Learning with Differential Privacy* [DP-SGD]
-4. Mironov (2017) — *Renyi Differential Privacy* [RDP accounting]
-5. Balle et al. (2022) — *Opacus: User-Friendly Differential Privacy for Deep Learning*
-
----
-
-## Viva Q&A
-
-**Q: Why no real Flower server?**
-> Real `flwr.server` needs multiple processes and ports — incompatible with Streamlit.
-> We use `flwr.simulation.start_simulation()` which runs everything in one process.
-> The FL algorithm is mathematically identical.
-
-**Q: Is the DP real?**
-> Yes. Gradient clipping + Gaussian noise is the exact DP-SGD algorithm.
-> The epsilon accounting uses RDP composition — same math as Opacus internally.
-
-**Q: Why GroupNorm instead of BatchNorm?**
-> Opacus requires no BatchNorm — it leaks per-sample information via batch statistics.
-> GroupNorm(num_groups=1) is equivalent to LayerNorm and works identically.
-
-**Q: What is Non-IID?**
-> Each bank's customers have a different distribution (income, age, default rate).
-> Standard FedAvg suffers from "client drift" — FedProx's proximal term fixes this.
-
-**Q: What does epsilon=2 mean?**
-> An adversary observing the trained model cannot distinguish whether a specific
-> customer's data was included in training with probability more than e^2 ≈ 7.4x.
-> epsilon < 3 is the standard target for financial applications.
