@@ -1,0 +1,25 @@
+streamlit>=1.32.0
+torch>=2.0.0
+numpy>=1.24.0
+pandas>=2.0.0
+plotly>=5.18.0
+scikit-learn>=1.3.0
+streamlit-option-menu>=0.3.6
+pyyaml>=6.0
+
+# ── Flower — Federated Learning Framework ──────────────────────────────────
+flwr>=1.7.0
+
+# ── Opacus — Differential Privacy (Meta) ──────────────────────────────────
+# Requires PyTorch >= 2.0. If install fails, the custom DP backend is used.
+opacus>=1.4.0
+
+# ── FastAPI — REST API for /predict endpoint ───────────────────────────────
+fastapi>=0.110.0
+uvicorn>=0.27.0
+
+# ── Experiment tracking ────────────────────────────────────────────────────
+matplotlib>=3.7.0
+
+# ── Optional — for Opacus compatibility check ──────────────────────────────
+# pip install opacus>=1.4.0 --no-deps  (if torch version conflict)
