@@ -13,9 +13,9 @@ BANK_PROFILES = {
     "HDFC":  dict(income_mean=62000, income_std=22000, age_mean=34, default_rate=0.18, n=1000),
     "Axis":  dict(income_mean=48000, income_std=18000, age_mean=37, default_rate=0.22, n=900),
     "PNB":   dict(income_mean=32000, income_std=14000, age_mean=45, default_rate=0.30, n=800),
-    # ── 5th Bank (NEW): ICICI — urban high-income, young professionals, low default
+    # ICICI — urban high-income, young professionals, low default
     "ICICI": dict(income_mean=82000, income_std=28000, age_mean=31, default_rate=0.14, n=1100),
-    # ── 6th Bank (NEW): Kotak — mixed retail
+    # Kotak — mixed retail
     "Kotak": dict(income_mean=55000, income_std=20000, age_mean=35, default_rate=0.16, n=950),
 }
 

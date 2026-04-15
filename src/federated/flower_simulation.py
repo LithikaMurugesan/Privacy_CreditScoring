@@ -138,12 +138,19 @@ def run_flower_simulation(
         f"{num_rounds} rounds, {'FedProx' if use_fedprox else 'FedAvg'}"
     )
 
-    history = fl.simulation.start_simulation(
-        client_fn=client_fn,
-        num_clients=len(banks),
-        config=fl.server.ServerConfig(num_rounds=num_rounds),
-        strategy=strategy,
-    )
+    try:
+        history = fl.simulation.start_simulation(
+            client_fn=client_fn,
+            num_clients=len(banks),
+            config=fl.server.ServerConfig(num_rounds=num_rounds),
+            strategy=strategy,
+        )
+    except ImportError:
+        logger.warning("Flower simulation requires ray — falling back to custom FL loop.")
+        return _run_custom_fallback(
+            banks, all_data, num_rounds, cfg, use_fedprox, mu,
+            metrics_logger, progress_callback
+        )
 
     # ── Extract final metrics ─────────────────────────────────────────────
     # Rebuild model from last round aggregated parameters

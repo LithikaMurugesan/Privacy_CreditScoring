@@ -109,7 +109,6 @@ with st.sidebar:
         f'{icon("fa-building")} FL Credit Scoring</span></div>',
         unsafe_allow_html=True,
     )
-    st.caption("Privacy-Preserving Federated Learning | 5 Banks")
     st.divider()
 
     page = option_menu(
@@ -261,163 +260,15 @@ def render_export_tab(logger: FLLogger):
 # PAGE 1 — OVERVIEW
 # ═════════════════════════════════════════════════════════════════════════════
 if page == "Overview":
-    st.markdown("""
-    <div class="topbar">
-      <h1>Privacy-Preserving Credit Scoring</h1>
-      <p>Federated Learning (FedAvg / FedProx) &mdash; Differential Privacy (Custom / Opacus) &mdash;
-         Non-IID Financial Data &mdash; PyTorch + Flower</p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="topbar"><h1>Privacy-Preserving Credit Scoring</h1></div>', unsafe_allow_html=True)
 
     c1, c2, c3, c4 = st.columns(4)
     total = sum(BANK_PROFILES[b]["n"] for b in BANK_PROFILES)
-    c1.markdown(f'<div class="kpi"><div class="kpi-val">5</div><div class="kpi-lbl">Banks Federated</div></div>', unsafe_allow_html=True)
+    c1.markdown(f'<div class="kpi"><div class="kpi-val">6</div><div class="kpi-lbl">Banks Federated</div></div>', unsafe_allow_html=True)
     c2.markdown(f'<div class="kpi"><div class="kpi-val">{total:,}</div><div class="kpi-lbl">Total Samples</div></div>', unsafe_allow_html=True)
     c3.markdown(f'<div class="kpi"><div class="kpi-val">epsilon~2.0</div><div class="kpi-lbl">Privacy Budget</div></div>', unsafe_allow_html=True)
     c4.markdown(f'<div class="kpi"><div class="kpi-val">0 bytes</div><div class="kpi-lbl">Raw Data Shared</div></div>', unsafe_allow_html=True)
 
-    st.divider()
-
-    # ── Training Modes ───────────────────────────────────────────────────
-    icon_header("fa-layer-group", "Training Modes", level=2)
-    m1, m2 = st.columns(2)
-    modes_info = [
-        ("Centralized", "#94a3b8", "All banks pool raw data. One model. Best accuracy, zero privacy. Upper bound."),
-        ("FedAvg",       "#22c55e", "Each bank trains locally. Only weights shared. No DP. Pure FL baseline."),
-        ("FedAvg + DP",  "#38bdf8", "FedAvg + Gaussian noise on gradients. Our main privacy-preserving approach."),
-        ("FedProx + DP", "#f97316", "FedAvg + DP + proximal regularisation. Best for Non-IID heterogeneous data."),
-    ]
-    for i, (name, clr, desc) in enumerate(modes_info):
-        col = m1 if i % 2 == 0 else m2
-        col.markdown(
-            f'<div class="mode-card" style="border-left:4px solid {clr}">'
-            f'<h4>{name}</h4><p>{desc}</p></div>',
-            unsafe_allow_html=True,
-        )
-
-    st.divider()
-    col1, col2 = st.columns(2)
-
-    with col1:
-        icon_header("fa-key", "Key Concepts", level=3)
-
-        with st.expander("Federated Learning — How it works", expanded=True):
-            st.markdown("""
-**Federated Learning** solves the problem of training a shared model when data
-cannot leave its owner's premises (legal, regulatory, competitive reasons).
-
-**Protocol:**
-1. Server sends global model weights to all banks
-2. Each bank trains locally for a few epochs on its own data
-3. Banks send updated weights back (not raw data)
-4. Server aggregates using **FedAvg** (weighted average by sample count)
-5. Repeat for N rounds
-
-**Key property:** Raw customer data never leaves the bank. Only floating-point
-model weights (gradients) are transmitted — and these are further protected by
-Differential Privacy noise injection.
-
-**Two aggregation strategies in this project:**
-- **FedAvg**: Weighted average. Fast, simple. Struggles with Non-IID data.
-- **FedProx**: Adds a proximal term `(mu/2)||w_local - w_global||2` to penalise
-  local drift. Significantly better on heterogeneous (Non-IID) data.
-            """)
-
-        with st.expander("Differential Privacy — Simple Explanation", expanded=True):
-            st.markdown("""
-**Differential Privacy** is a mathematical guarantee that an adversary cannot
-determine whether any individual's data was in the training set.
-
-**Formally:** An algorithm A is (epsilon, delta)-DP if:
-> P[A(D) in S] <= e^epsilon * P[A(D') in S] + delta
-
-for any two datasets D and D' differing in one record.
-
-**How we apply it (DP-SGD):**
-
-| Step | Operation | Purpose |
-|------|-----------|---------|
-| 1 | Clip gradients to max_norm C | Bound per-sample sensitivity |
-| 2 | Add Gaussian noise N(0, sigma*C) | Hide individual contributions |
-| 3 | Track privacy budget epsilon | Know when privacy guarantee holds |
-
-**What epsilon means:**
-- epsilon < 1: Very strong privacy (medical records)
-- epsilon 1-3: Strong privacy (banking — our target)
-- epsilon 3-7: Moderate privacy (general ML)
-- epsilon > 7: Weak privacy
-
-**Two backends:**
-- **Custom**: Manual implementation (clip + noise + RDP accounting)
-- **Opacus**: Meta's production-grade DP library (exact per-sample gradients)
-            """)
-
-        with st.expander("Non-IID Challenge and FedProx", expanded=False):
-            st.markdown("""
-**Why Non-IID data is a problem:**
-
-Each bank serves a different customer segment:
-- SBI: Rural/agricultural — low income, 28% default rate
-- HDFC: IT professionals — high income, 18% default rate
-- Axis: Business owners — medium income, 22% default rate
-- PNB: Government employees — stable but lower income, 30% default
-- ICICI: Urban professionals — highest income, 14% default rate
-
-These **different distributions** cause **client drift**: local models trained
-on one bank's data diverge in different directions. When FedAvg averages them,
-the global model can be worse than training on any single bank.
-
-**FedProx solution:**
-
-Adds to each client's loss:
-```
-L_total = L_CrossEntropy + (mu/2) * ||w_local - w_global||^2
-```
-
-The proximal term acts as a rubber band — it allows local specialisation
-while preventing excessive divergence from the global model.
-
-**Result:** FedProx consistently outperforms FedAvg on Non-IID data when
-mu is tuned between 0.01 and 0.1.
-            """)
-
-    with col2:
-        icon_header("fa-sitemap", "System Architecture", level=3)
-        arch_df = pd.DataFrame({
-            "Layer":  [
-                "Streamlit Dashboard", "FL Engine", "Flower Simulation",
-                "Neural Network", "Differential Privacy",
-                "Bank Datasets", "REST API", "Experiment Logger",
-            ],
-            "Module": [
-                "app.py", "src/federated/fl_engine.py",
-                "src/federated/flower_simulation.py",
-                "src/models/model.py", "src/privacy/dp_manager.py",
-                "src/data/data_generator.py", "src/api/server.py",
-                "src/utils/fl_logger.py",
-            ],
-            "Notes":  [
-                "7-page UI, real-time metrics",
-                "Unified mode dispatcher",
-                "flwr.simulation (Streamlit-compatible)",
-                "CreditNet MLP, GroupNorm (Opacus-ready)",
-                "Custom or Opacus backend",
-                "6 banks, ~5,950 synthetic samples",
-                "FastAPI /predict endpoint",
-                "CSV export, disk save",
-            ],
-        })
-        st.dataframe(arch_df, use_container_width=True, hide_index=True)
-
-        icon_header("fa-building-columns", "Bank Profiles (Non-IID)", level=3)
-        for b, p in BANK_PROFILES.items():
-            st.markdown(
-                f'<div class="bank-row" style="border-color:{BANK_COLORS[b]}">'
-                f'<b>{b}</b> &mdash; {p["n"]:,} samples | '
-                f'Avg income: INR {p["income_mean"]:,} | '
-                f'Default rate: {p["default_rate"]*100:.0f}%</div>',
-                unsafe_allow_html=True,
-            )
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -814,44 +665,10 @@ elif page == "Privacy Analysis":
 
     tab_custom, tab_opacus = st.tabs(["Custom DP", "Opacus DP"])
     with tab_custom:
-        st.code("""
-# src/privacy/dp_custom.py — Step by step
-# Step 1: Gradient Clipping (bound sensitivity)
-total_norm = sum(p.grad.norm(2)**2 for p in model.parameters()) ** 0.5
-clip_coef  = max_norm / max(total_norm, max_norm)
-for p in model.parameters():
-    p.grad.data.mul_(clip_coef)
-
-# Step 2: Gaussian Noise injection
-noise_std = noise_multiplier * max_norm / batch_size
-for p in model.parameters():
-    p.grad.data.add_(torch.randn_like(p.grad) * noise_std)
-
-# Step 3: RDP Accounting
-epsilon = rdp + log(1/delta) / (2 * rdp)
-        """, language="python")
+        pass
 
     with tab_opacus:
-        st.code("""
-# src/privacy/dp_opacus.py — Opacus PrivacyEngine
-from opacus import PrivacyEngine
-
-privacy_engine = PrivacyEngine()
-model, optimizer, loader = privacy_engine.make_private(
-    module=model,
-    optimizer=optimizer,
-    data_loader=loader,
-    noise_multiplier=1.1,   # sigma
-    max_grad_norm=1.0,      # C
-)
-
-# Train normally — privacy applied automatically in backward pass
-loss.backward()
-optimizer.step()
-
-# Get exact epsilon after training
-epsilon = privacy_engine.get_epsilon(delta=1e-5)
-        """, language="python")
+        pass
 
     st.divider()
     st.dataframe(pd.DataFrame({
