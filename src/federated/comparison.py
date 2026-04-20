@@ -1,24 +1,3 @@
-"""
-src/federated/comparison.py
-============================
-Performance comparison module — runs all 4 training modes side-by-side.
-
-Modes compared:
-  1. Centralized (no privacy, upper bound)
-  2. FedAvg        (federated, no DP)
-  3. FedAvg + DP   (our main approach)
-  4. FedProx + DP  (best for Non-IID data)
-
-This module now uses FLEngine as the unified backend, so it correctly
-supports both Flower and custom FL loop depending on what's installed.
-
-Usage (from CLI):
-    python run_experiment.py
-
-Usage (from code):
-    from src.federated.comparison import run_comparison
-    rows = run_comparison(banks=["SBI","HDFC","Axis"], num_rounds=8)
-"""
 
 import logging
 import numpy as np
@@ -40,27 +19,7 @@ def run_comparison(
     dp_backend: str = "custom",
     verbose: bool = True,
 ) -> list:
-    """
-    Run all 4 training modes and return comparison results.
-
-    Parameters
-    ----------
-    banks       : list of bank names (default: all banks)
-    all_data    : dict[bank -> pd.DataFrame] (loaded if None)
-    num_rounds  : FL communication rounds
-    local_epochs: local epochs per round
-    lr          : learning rate
-    noise_mult  : DP noise multiplier (sigma)
-    max_norm    : gradient clipping norm (C)
-    mu          : FedProx proximal coefficient
-    fl_backend  : "flower" | "custom"
-    dp_backend  : "opacus" | "custom"
-    verbose     : print progress to stdout
-
-    Returns
-    -------
-    list of dicts — one per mode, suitable for pd.DataFrame
-    """
+   
     if all_data is None:
         from src.data.data_generator import load_all_data, BANK_PROFILES
         all_data = load_all_data()

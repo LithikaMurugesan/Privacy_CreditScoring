@@ -1,7 +1,3 @@
-"""
-plots.py  —  development branch
-All Plotly chart builders. Called from app.py pages.
-"""
 
 import plotly.graph_objects as go
 import plotly.express as px
@@ -17,10 +13,6 @@ BANK_COLORS = {
 
 _DARK = "plotly_dark"
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# FL TRAINING CHARTS
-# ═════════════════════════════════════════════════════════════════════════════
 
 def fl_accuracy_chart(history: dict, global_acc: list, sel_banks: list) -> go.Figure:
     """Live accuracy chart — local per-bank (dashed) + global (solid white)."""
@@ -50,7 +42,7 @@ def fl_accuracy_chart(history: dict, global_acc: list, sel_banks: list) -> go.Fi
 
 
 def fl_loss_chart(history: dict, sel_banks: list) -> go.Figure:
-    """Per-bank training loss across rounds."""
+   
     fig = go.Figure()
     for b in sel_banks:
         losses = history.get(b, {}).get("loss", [])
@@ -94,21 +86,12 @@ def auc_vs_epsilon_chart(global_auc: list, epsilon_log: list) -> go.Figure:
     return fig
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# BASELINE COMPARISON CHARTS
-# ═════════════════════════════════════════════════════════════════════════════
-
 def baseline_comparison_bar(
     fl_acc: float,
     central_acc: float,
     local_results: dict,
 ) -> go.Figure:
-    """
-    Bar chart comparing:
-    - Centralized baseline (upper bound, no privacy)
-    - FL + DP (our approach)
-    - Per-bank local-only (lower bound)
-    """
+
     labels = ["Centralized\n(no privacy)"]
     values = [central_acc]
     colors = ["#94a3b8"]
@@ -140,7 +123,7 @@ def baseline_comparison_bar(
 
 
 def baseline_learning_curve(history: dict) -> go.Figure:
-    """Centralized baseline train vs val accuracy per epoch."""
+
     ep = history["epoch"]
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=ep, y=history["acc"], name="Train acc",
@@ -160,10 +143,6 @@ def baseline_learning_curve(history: dict) -> go.Figure:
     )
     return fig
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# PRIVACY ANALYSIS CHARTS
-# ═════════════════════════════════════════════════════════════════════════════
 
 def epsilon_vs_accuracy_curve(current_eps: float | None = None) -> go.Figure:
     eps_vals = [0.1, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0, 8.0, 10.0]
@@ -205,10 +184,6 @@ def epsilon_budget_bars(epsilon_log: list, budget_limit: float) -> go.Figure:
     )
     return fig
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# DATA EXPLORER CHARTS
-# ═════════════════════════════════════════════════════════════════════════════
 
 def income_distribution(all_data: dict) -> go.Figure:
     fig = go.Figure()

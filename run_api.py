@@ -1,22 +1,3 @@
-"""
-run_api.py
-==========
-Entry point for the FastAPI credit scoring REST API.
-
-Usage:
-    python run_api.py
-    python run_api.py --host 0.0.0.0 --port 8000
-
-The API will be available at:
-    http://localhost:8000
-    http://localhost:8000/docs  (interactive Swagger UI)
-    http://localhost:8000/predict (POST endpoint)
-
-Train a model first to get real predictions:
-    python run_experiment.py --mode fedavg_dp
-
-Or just run the API for demo purposes (untrained model).
-"""
 
 import sys
 import os

@@ -1,8 +1,3 @@
-"""
-baseline.py  —  development branch
-Centralized baseline: trains on pooled data from all banks (no privacy).
-Used as upper-bound accuracy comparison against the FL+DP model.
-"""
 
 import numpy as np
 import pandas as pd
@@ -15,11 +10,6 @@ import copy
 
 from data.data_generator import FEATURE_NAMES
 from models.model import CreditNet, get_weights, set_weights
-
-
-# ═════════════════════════════════════════════════════════════════════════════
-# CENTRALIZED BASELINE TRAINER
-# ═════════════════════════════════════════════════════════════════════════════
 
 def train_centralized_baseline(
     all_data: dict,
@@ -35,7 +25,7 @@ def train_centralized_baseline(
     This simulates the 'ideal upper bound' if all data were shared freely.
     """
 
-    # Pool data
+   
     frames = [all_data[b] for b in selected_banks if b in all_data]
     df_all = pd.concat(frames, ignore_index=True).sample(frac=1, random_state=42)
 
@@ -43,7 +33,7 @@ def train_centralized_baseline(
     X = scaler.fit_transform(df_all[FEATURE_NAMES].values).astype(np.float32)
     y = df_all["default"].values.astype(np.float32)
 
-    # Train/val split (80/20)
+   
     split    = int(0.8 * len(X))
     X_tr, X_val = X[:split], X[split:]
     y_tr, y_val = y[:split], y[split:]
@@ -75,7 +65,6 @@ def train_centralized_baseline(
 
         scheduler.step()
 
-        # Train metrics
         model.eval()
         with torch.no_grad():
             tr_probs = model(torch.from_numpy(X_tr)).numpy()
@@ -111,20 +100,13 @@ def train_centralized_baseline(
     }
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# LOCAL-ONLY BASELINE (each bank trains in isolation, no federation)
-# ═════════════════════════════════════════════════════════════════════════════
-
 def train_local_only_baselines(
     all_data: dict,
     selected_banks: list,
     epochs: int = 10,
     lr: float = 0.001,
 ) -> dict:
-    """
-    Each bank trains its own isolated model.  No FL, no DP.
-    Returns per-bank metrics. Used to show FL's benefit over isolation.
-    """
+    
     results = {}
 
     for bank in selected_banks:

@@ -1,18 +1,3 @@
-"""
-run_experiment.py
-=================
-CLI experiment runner — trains all 4 modes and saves results.
-
-Usage:
-    python run_experiment.py
-    python run_experiment.py --banks SBI HDFC Axis --rounds 10
-    python run_experiment.py --mode fedavg_dp --fl-backend flower
-
-Output:
-    experiments/results/{timestamp}_comparison.csv
-    experiments/results/{timestamp}_comparison.png
-    experiments/results/best_model.pt
-"""
 
 import argparse
 import os
@@ -25,7 +10,7 @@ matplotlib.use("Agg")  # non-interactive backend
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-# ── Setup path ───────────────────────────────────────────────────────────────
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 logging.basicConfig(

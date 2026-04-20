@@ -1,7 +1,3 @@
-"""
-fl_logger.py  —  development branch
-Collects structured FL round logs, exports to CSV, provides log replay.
-"""
 
 import pandas as pd
 import io
@@ -19,7 +15,7 @@ class FLLogger:
         self.g_records = []  # global model metrics per round
         self.started_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # ── Per-bank log ────────────────────────────────────────────────────────
+    
     def log_client(self, round_num: int, bank: str, acc: float, auc: float,
                    loss: float, n_samples: int, epsilon: float):
         self.records.append({
@@ -32,8 +28,6 @@ class FLLogger:
             "epsilon":   round(epsilon, 4),
             "timestamp": datetime.now().strftime("%H:%M:%S"),
         })
-
-    # ── Global model log ────────────────────────────────────────────────────
     def log_global(self, round_num: int, g_acc: float, g_auc: float,
                    epsilon: float, delta: float = 1e-5):
         self.g_records.append({
@@ -46,14 +40,12 @@ class FLLogger:
             "timestamp":    datetime.now().strftime("%H:%M:%S"),
         })
 
-    # ── DataFrames ──────────────────────────────────────────────────────────
     def client_df(self) -> pd.DataFrame:
         return pd.DataFrame(self.records) if self.records else pd.DataFrame()
 
     def global_df(self) -> pd.DataFrame:
         return pd.DataFrame(self.g_records) if self.g_records else pd.DataFrame()
 
-    # ── CSV export ──────────────────────────────────────────────────────────
     def client_csv(self) -> bytes:
         return self.client_df().to_csv(index=False).encode()
 
@@ -69,7 +61,6 @@ class FLLogger:
         merged = cdf.merge(gdf, on="round", how="left")
         return merged.to_csv(index=False).encode()
 
-    # ── Summary ─────────────────────────────────────────────────────────────
     def summary(self) -> dict:
         if not self.g_records:
             return {}
@@ -85,8 +76,6 @@ class FLLogger:
             "total_samples":    int(cdf.groupby("bank")["n_samples"].first().sum()) if not cdf.empty else 0,
             "started_at":       self.started_at,
         }
-
-    # ── Human-readable round log lines ──────────────────────────────────────
     def round_lines(self, round_num: int) -> list[str]:
         lines = [f"━━ Round {round_num} ━━"]
         for r in self.records:

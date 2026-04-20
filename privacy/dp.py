@@ -1,9 +1,6 @@
 import torch
 import numpy as np
 
-# ═════════════════════════════════════════════════════════════════════════════
-# GRADIENT CLIPPING
-# ═════════════════════════════════════════════════════════════════════════════
 
 def clip_gradients(model, max_norm):
     total_norm = 0.0
@@ -22,10 +19,6 @@ def clip_gradients(model, max_norm):
     return total_norm
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# ADD DIFFERENTIAL PRIVACY NOISE
-# ═════════════════════════════════════════════════════════════════════════════
-
 def add_dp_noise(model, noise_multiplier, max_norm, batch_size):
     for p in model.parameters():
         if p.grad is not None:
@@ -33,9 +26,6 @@ def add_dp_noise(model, noise_multiplier, max_norm, batch_size):
             p.grad.data.add_(noise)
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# EPSILON CALCULATION
-# ═════════════════════════════════════════════════════════════════════════════
 
 def compute_epsilon(noise_multiplier, sample_rate, num_steps, delta=1e-5):
     if noise_multiplier <= 0:

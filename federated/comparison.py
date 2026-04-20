@@ -1,17 +1,3 @@
-"""
-federated/comparison.py  —  Performance Comparison Module
-==========================================================
-Runs and compares four training regimes side-by-side:
-  1. Centralized   — pooled data, no privacy (upper bound)
-  2. FedAvg        — federated, no DP, no FedProx
-  3. FedAvg + DP   — federated + differential privacy (our main approach)
-  4. FedProx + DP  — federated + FedProx proximal term + differential privacy
-
-Usage (standalone):
-    python -m federated.comparison
-
-Returns a list of result dicts ready for pandas / Streamlit display.
-"""
 
 import copy
 import numpy as np
@@ -25,9 +11,6 @@ from federated.baseline import train_centralized_baseline
 from privacy.dp import compute_epsilon
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Helper: run one full FL session and return final global accuracy + AUC
-# ─────────────────────────────────────────────────────────────────────────────
 def _run_fl(
     all_data, banks, num_rounds=8, local_epochs=2, lr=0.001,
     use_dp=False, noise_mult=1.1, max_norm=1.0,
@@ -63,7 +46,6 @@ def _run_fl(
 
         set_weights(global_model, fed_avg(client_weights, client_sizes))
 
-    # Evaluate on each bank and macro-average
     accs, aucs = [], []
     for b in banks:
         acc, auc = evaluate_model(global_model, all_data[b], scalers[b])
@@ -73,7 +55,6 @@ def _run_fl(
     final_acc = float(np.mean(accs))
     final_auc = float(np.mean(aucs))
 
-    # Compute representative epsilon for DP runs
     if use_dp:
         sr  = 64 / BANK_PROFILES[banks[0]]["n"]
         st  = local_epochs * (BANK_PROFILES[banks[0]]["n"] // 64) * num_rounds
@@ -94,10 +75,6 @@ def _run_fl(
         "Epsilon":      eps,
     }
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Main comparison runner
-# ─────────────────────────────────────────────────────────────────────────────
 def run_comparison(
     banks=None,
     num_rounds=8,
@@ -108,24 +85,7 @@ def run_comparison(
     mu=0.01,
     verbose=True,
 ) -> list:
-    """
-    Run all four training regimes and return a list of result dicts.
 
-    Parameters
-    ----------
-    banks       : list of bank names to include (default: all 5)
-    num_rounds  : FL communication rounds
-    local_epochs: local training epochs per round
-    lr          : learning rate
-    noise_mult  : DP noise multiplier
-    max_norm    : gradient clipping norm
-    mu          : FedProx proximal regularisation coefficient
-    verbose     : if True, print results to stdout
-
-    Returns
-    -------
-    list of dicts — one per training regime, suitable for pd.DataFrame
-    """
     all_data = load_all_data()
     if banks is None:
         banks = list(BANK_PROFILES.keys())   # all 5 banks
@@ -141,7 +101,6 @@ def run_comparison(
 
     results = []
 
-    # 1. Centralized baseline (upper bound, no privacy)
     if verbose:
         print("  [1/4] Centralized training …")
     epochs_c = max(10, num_rounds * local_epochs)
@@ -157,7 +116,6 @@ def run_comparison(
     if verbose:
         print(f"  {'Centralized':20s}  acc={c['final_acc']:.4f}  auc={c['final_auc']:.4f}  (upper bound)")
 
-    # 2. FedAvg — no DP, no FedProx
     if verbose:
         print("  [2/4] FedAvg (no DP) …")
     results.append(_run_fl(
@@ -165,7 +123,6 @@ def run_comparison(
         use_dp=False, use_fedprox=False, verbose=verbose,
     ))
 
-    # 3. FedAvg + DP
     if verbose:
         print("  [3/4] FedAvg + DP …")
     results.append(_run_fl(
@@ -173,8 +130,6 @@ def run_comparison(
         use_dp=True, noise_mult=noise_mult, max_norm=max_norm,
         use_fedprox=False, verbose=verbose,
     ))
-
-    # 4. FedProx + DP
     if verbose:
         print("  [4/4] FedProx + DP …")
     results.append(_run_fl(
@@ -189,10 +144,6 @@ def run_comparison(
 
     return results
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Standalone entry-point
-# ─────────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import pandas as pd
     rows = run_comparison(verbose=True)

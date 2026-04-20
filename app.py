@@ -1,8 +1,3 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# Privacy-Preserving Credit Scoring — Production Dashboard
-# Federated Learning (FedAvg / FedProx) + Differential Privacy (Opacus / Custom)
-# Non-IID Financial Data | 6 Indian Banks | PyTorch + Flower
-# ─────────────────────────────────────────────────────────────────────────────
 
 import sys
 import os
@@ -18,7 +13,6 @@ from sklearn.preprocessing import StandardScaler
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-# ── src imports ───────────────────────────────────────────────────────────────
 from src.data.data_generator import load_all_data, FEATURE_NAMES, BANK_PROFILES, BANK_COLORS
 from src.models.model import CreditNet, get_weights, set_weights
 from src.federated.fl_engine import FLEngine
@@ -28,9 +22,7 @@ from src.privacy.dp_custom import compute_epsilon
 from src.utils.fl_logger import FLLogger
 from src.utils import plots as P
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Page Config
-# ─────────────────────────────────────────────────────────────────────────────
+
 st.set_page_config(
     page_title="FL Credit Scoring",
     page_icon="bank",
@@ -38,9 +30,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ─────────────────────────────────────────────────────────────────────────────
-# CSS & Fonts
-# ─────────────────────────────────────────────────────────────────────────────
 st.markdown(
     '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">',
     unsafe_allow_html=True,
@@ -67,9 +56,6 @@ code, pre { font-family: 'IBM Plex Mono', monospace !important; }
 """, unsafe_allow_html=True)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Helpers
-# ─────────────────────────────────────────────────────────────────────────────
 def icon(fa, color="#38bdf8"):
     return f'<i class="fa-solid {fa}" style="color:{color}"></i>'
 
@@ -99,9 +85,7 @@ def _load_data():
 all_data = _load_data()
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# SIDEBAR
-# ─────────────────────────────────────────────────────────────────────────────
+
 with st.sidebar:
     st.markdown(
         '<div style="padding:10px 0 4px">'
@@ -128,7 +112,6 @@ with st.sidebar:
     )
     st.divider()
 
-    # ── Training Mode ───────────────────────────────────────────────────────
     st.markdown(f'{icon("fa-layer-group")} **Training Mode**', unsafe_allow_html=True)
     training_mode = st.selectbox(
         "Mode",
@@ -143,7 +126,7 @@ with st.sidebar:
         key="sidebar_mode",
     )
 
-    # ── FL Config ───────────────────────────────────────────────────────────
+ 
     st.markdown(f'{icon("fa-gear")} **FL Config**', unsafe_allow_html=True)
     sel_banks    = st.multiselect("Banks", list(BANK_PROFILES.keys()),
                                   default=["SBI", "HDFC", "Axis"])
@@ -152,7 +135,6 @@ with st.sidebar:
     lr           = st.select_slider("Learning Rate",
                                     [0.0001, 0.001, 0.005, 0.01], value=0.001)
 
-    # ── FL Backend ──────────────────────────────────────────────────────────
     fl_backend = st.selectbox(
         "FL Backend",
         options=["custom", "flower"],
@@ -161,7 +143,7 @@ with st.sidebar:
     )
     st.divider()
 
-    # ── DP Config ───────────────────────────────────────────────────────────
+   
     use_dp = training_mode in ("fedavg_dp", "fedprox_dp")
     st.markdown(f'{icon("fa-shield-halved")} **Privacy Config**', unsafe_allow_html=True)
     dp_on_display = "ON" if use_dp else "OFF (mode selection controls this)"
@@ -180,7 +162,7 @@ with st.sidebar:
     )
     st.divider()
 
-    # ── FedProx Config ──────────────────────────────────────────────────────
+
     use_fedprox = training_mode == "fedprox_dp"
     st.markdown(f'{icon("fa-sliders")} **FedProx Config**', unsafe_allow_html=True)
     st.caption("FedProx: " + ("ON" if use_fedprox else "OFF (mode selection controls this)"))
@@ -191,9 +173,6 @@ with st.sidebar:
     )
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# FL Log helpers
-# ─────────────────────────────────────────────────────────────────────────────
 def render_log_tab(logger: FLLogger):
     icon_header("fa-terminal", "Full FL Training Log", level=3)
     cdf = logger.client_df()
@@ -255,10 +234,6 @@ def render_export_tab(logger: FLLogger):
         st.markdown("**Preview — global log:**")
         st.dataframe(gdf, use_container_width=True, hide_index=True)
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# PAGE 1 — OVERVIEW
-# ═════════════════════════════════════════════════════════════════════════════
 if page == "Overview":
     st.markdown('<div class="topbar"><h1>Privacy-Preserving Credit Scoring</h1></div>', unsafe_allow_html=True)
 
@@ -270,10 +245,6 @@ if page == "Overview":
     c4.markdown(f'<div class="kpi"><div class="kpi-val">0 bytes</div><div class="kpi-lbl">Raw Data Shared</div></div>', unsafe_allow_html=True)
 
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# PAGE 2 — DATA EXPLORER
-# ═════════════════════════════════════════════════════════════════════════════
 elif page == "Data Explorer":
     icon_header("fa-chart-bar", "Data Explorer — Non-IID Bank Data", level=1)
     tab1, tab2, tab3 = st.tabs(["Income Distribution", "Feature Correlation", "Raw Sample"])
@@ -297,10 +268,6 @@ elif page == "Data Explorer":
         bk2 = st.selectbox("Select Bank ", list(BANK_PROFILES.keys()), key="de_raw_bank")
         st.dataframe(all_data[bk2].head(50), use_container_width=True)
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# PAGE 3 — FL TRAINING
-# ═════════════════════════════════════════════════════════════════════════════
 elif page == "FL Training":
     icon_header("fa-gear", "Federated Learning Training", level=1)
 
@@ -326,7 +293,6 @@ elif page == "FL Training":
 
     run_btn = st.button("Start FL Training", use_container_width=True, type="primary")
 
-    # ── Show previous run ─────────────────────────────────────────────────
     if not run_btn and "fl_logger" in st.session_state:
         logger  = st.session_state["fl_logger"]
         summary = logger.summary()
@@ -412,7 +378,7 @@ elif page == "FL Training":
                 progress_cb    = _progress_cb,
             )
 
-        # Sync from engine result if progress_cb didn't fire (e.g. centralized)
+
         if not global_acc:
             global_acc  = result.get("acc_history", [result.get("final_acc", 0)])
             global_auc  = result.get("auc_history", [result.get("final_auc", 0)])
@@ -470,37 +436,13 @@ elif page == "FL Training":
 
     else:
         st.info("Configure settings in the sidebar then click **Start FL Training**.")
-        st.code("""
-# Example: what FLEngine does internally
-engine = FLEngine()
-result = engine.run(
-    mode="fedavg_dp",      # FedAvg + Differential Privacy
-    banks=["SBI","HDFC"],  # Non-IID bank partitions
-    num_rounds=8,
-    use_dp=True,
-    noise_mult=1.1,        # sigma — Gaussian noise scale
-    max_norm=1.0,          # C — gradient clipping norm
-    fl_backend="flower",   # or "custom"
-    dp_backend="opacus",   # or "custom"
-)
-# result["final_acc"]  → global accuracy
-# result["final_epsilon"] → privacy budget consumed
-        """, language="python")
+        st.code( language="python")
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# PAGE 4 — BASELINE COMPARISON
-# ═════════════════════════════════════════════════════════════════════════════
 elif page == "Baseline Comparison":
     icon_header("fa-chart-bar", "Baseline Comparison", level=1)
     st.caption("FL+DP vs Centralized (upper bound) vs Local-only (lower bound)")
 
-    st.info("""
-**Three training regimes:**
-1. **Centralized** — all banks pool data, one model (no privacy, best accuracy)
-2. **FL + DP** (our approach) — federated + differential privacy
-3. **Local-only** — each bank trains in isolation (worst accuracy)
-    """)
+    st.info()
 
     if len(sel_banks) < 2:
         st.warning("Select at least 2 banks in the sidebar.")
@@ -571,9 +513,6 @@ elif page == "Baseline Comparison":
         st.info("Click **Run Baseline Comparison** to train all three regimes.")
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# PAGE 5 — PERFORMANCE COMPARISON
-# ═════════════════════════════════════════════════════════════════════════════
 elif page == "Performance Comparison":
     icon_header("fa-trophy", "Performance Comparison — All 4 Modes", level=1)
     st.caption("Centralized vs FedAvg vs FedAvg+DP vs FedProx+DP")
@@ -637,9 +576,6 @@ elif page == "Performance Comparison":
         st.caption("Expected approximate results — run comparison to see actual values.")
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# PAGE 6 — PRIVACY ANALYSIS
-# ═════════════════════════════════════════════════════════════════════════════
 elif page == "Privacy Analysis":
     icon_header("fa-shield-halved", "Differential Privacy Analysis", level=1)
 
@@ -688,16 +624,12 @@ elif page == "Privacy Analysis":
     else:
         icon_status("fa-circle-xmark", "DP is OFF — gradients are not protected.", "#ef4444", "#1a0000")
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# PAGE 7 — CREDIT PREDICTOR
-# ═════════════════════════════════════════════════════════════════════════════
 elif page == "Credit Predictor":
     icon_header("fa-credit-card", "Credit Score Predictor", level=1)
     model_ready = "trained_model" in st.session_state
 
     if not model_ready:
-        # Try to load from disk
+       
         model_path = "experiments/results/best_model.pt"
         if os.path.exists(model_path):
             try:
