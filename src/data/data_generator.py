@@ -36,7 +36,7 @@ FEATURE_NAMES = [
 ]
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Bank profiles — 6 Indian banks with distinct customer segments
+# Bank profiles — 5 Indian banks with distinct customer segments
 # These create the Non-IID heterogeneity in the federated setting.
 # ─────────────────────────────────────────────────────────────────────────────
 BANK_PROFILES = {
@@ -50,8 +50,6 @@ BANK_PROFILES = {
     "PNB":   dict(income_mean=32000, income_std=14000, age_mean=45, default_rate=0.30, n=800),
     # Urban young professionals — highest income, lowest default
     "ICICI": dict(income_mean=82000, income_std=28000, age_mean=31, default_rate=0.14, n=1100),
-    # Mixed retail — balanced
-    "Kotak": dict(income_mean=55000, income_std=20000, age_mean=35, default_rate=0.16, n=950),
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -63,7 +61,6 @@ BANK_COLORS = {
     "Axis":  "#22c55e",
     "PNB":   "#a855f7",
     "ICICI": "#ec4899",
-    "Kotak": "#eab308",
 }
 
 
@@ -130,7 +127,7 @@ def generate_bank_data(bank_name: str, seed: int = 42) -> pd.DataFrame:
 
 def load_all_data(seed: int = 42) -> dict:
     """
-    Load synthetic data for all 6 banks.
+    Load synthetic data for all 5 banks.
 
     Returns
     -------
