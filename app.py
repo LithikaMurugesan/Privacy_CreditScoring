@@ -129,7 +129,7 @@ with st.sidebar:
  
     st.markdown(f'{icon("fa-gear")} **FL Config**', unsafe_allow_html=True)
     sel_banks    = st.multiselect("Banks", list(BANK_PROFILES.keys()),
-                                  default=["SBI", "HDFC", "Axis"])
+                                  default=["SBI", "HDFC", "Axis", "PNB", "ICICI"])
     num_rounds   = st.slider("FL Rounds",    3, 15, 8)
     local_epochs = st.slider("Local Epochs", 1,  5, 2)
     lr           = st.select_slider("Learning Rate",
@@ -239,7 +239,7 @@ if page == "Overview":
 
     c1, c2, c3, c4 = st.columns(4)
     total = sum(BANK_PROFILES[b]["n"] for b in BANK_PROFILES)
-    c1.markdown(f'<div class="kpi"><div class="kpi-val">6</div><div class="kpi-lbl">Banks Federated</div></div>', unsafe_allow_html=True)
+    c1.markdown(f'<div class="kpi"><div class="kpi-val">5</div><div class="kpi-lbl">Banks Federated</div></div>', unsafe_allow_html=True)
     c2.markdown(f'<div class="kpi"><div class="kpi-val">{total:,}</div><div class="kpi-lbl">Total Samples</div></div>', unsafe_allow_html=True)
     c3.markdown(f'<div class="kpi"><div class="kpi-val">epsilon~2.0</div><div class="kpi-lbl">Privacy Budget</div></div>', unsafe_allow_html=True)
     c4.markdown(f'<div class="kpi"><div class="kpi-val">0 bytes</div><div class="kpi-lbl">Raw Data Shared</div></div>', unsafe_allow_html=True)
@@ -436,13 +436,12 @@ elif page == "FL Training":
 
     else:
         st.info("Configure settings in the sidebar then click **Start FL Training**.")
-        st.code( language="python")
 
 elif page == "Baseline Comparison":
     icon_header("fa-chart-bar", "Baseline Comparison", level=1)
     st.caption("FL+DP vs Centralized (upper bound) vs Local-only (lower bound)")
 
-    st.info()
+    st.info("Click **Run Baseline Comparison** to train and compare all three regimes.")
 
     if len(sel_banks) < 2:
         st.warning("Select at least 2 banks in the sidebar.")
