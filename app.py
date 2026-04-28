@@ -52,6 +52,40 @@ code, pre { font-family: 'IBM Plex Mono', monospace !important; }
 .mode-card { background:#0f172a; border:1px solid #334155; border-radius:10px; padding:14px 18px; margin:6px 0; }
 .mode-card h4 { margin:0 0 4px; color:#38bdf8; font-size:0.95rem; }
 .mode-card p  { margin:0; font-size:0.82rem; color:#94a3b8; }
+
+/* ---- SIDEBAR: always visible, professional ---- */
+button[data-testid="stSidebarCollapseButton"],
+[data-testid="collapsedControl"] {
+    display: none !important;
+}
+section[data-testid="stSidebar"] {
+    min-width: 256px !important;
+    width: 256px !important;
+}
+section[data-testid="stSidebar"] > div {
+    width: 256px !important;
+}
+
+/* ---- SIDEBAR BUTTON (Logout) ---- */
+section[data-testid="stSidebar"] .stButton > button {
+    background: transparent;
+    color: #94a3b8;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.25s ease;
+    padding: 9px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+section[data-testid="stSidebar"] .stButton > button:hover {
+    background: rgba(212,165,116,0.12);
+    color: #d4a574;
+    border-color: #d4a574;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -84,13 +118,55 @@ def _load_data():
 
 all_data = _load_data()
 
+# --- NEW: LOGIN AND SESSION STATE ---
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = False
 
+if not st.session_state["authenticated"]:
+    st.markdown(f'<div class="topbar" style="margin-top: 50px;"><h1>{icon("fa-shield-halved")} Privacy-Preserving Credit Scoring</h1></div>', unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown(f'<div class="kpi" style="text-align: left; padding: 30px;">'
+                    f'<h3 style="color: #38bdf8; margin-top: 0;">{icon("fa-lock")} Admin Login</h3>'
+                    f'<p style="color: #94a3b8; font-size: 0.9rem;">Sign in to access the federated learning dashboard.</p>', unsafe_allow_html=True)
+        with st.form("login_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            submitted = st.form_submit_button("Login")
+            if submitted:
+                if username == "admin" and password == "admin123":
+                    st.session_state["authenticated"] = True
+                    st.success("Login successful! Redirecting...")
+                    st.rerun()
+                else:
+                    st.error("Invalid credentials. Please try again.")
+        st.markdown('</div>', unsafe_allow_html=True)
+        st.caption("Demo Credentials: username: admin | password: admin123")
+    st.stop() # Stop rendering the rest of the application
 
+def _init_state(key, val):
+    if key not in st.session_state:
+        st.session_state[key] = val
+
+_init_state("training_mode", "fedavg_dp")
+_init_state("sel_banks", ["SBI", "HDFC", "Axis", "PNB", "ICICI"])
+_init_state("num_rounds", 8)
+_init_state("local_epochs", 2)
+_init_state("lr", 0.001)
+_init_state("fl_backend", "custom")
+_init_state("noise_mult", 1.1)
+_init_state("max_norm", 1.0)
+_init_state("dp_backend", "custom")
+_init_state("mu_fedprox", 0.01)
+# ------------------------------------
+
+# ---- SIDEBAR (always visible, professional navigation) ----
 with st.sidebar:
     st.markdown(
-        '<div style="padding:10px 0 4px">'
+        '<div style="padding:8px 0 4px">'
         '<span style="font-size:1.1rem;font-weight:700;color:#38bdf8">'
-        f'{icon("fa-building")} FL Credit Scoring</span></div>',
+        f'{icon("fa-building-columns")} FL Credit Scoring</span></div>',
         unsafe_allow_html=True,
     )
     st.divider()
@@ -100,77 +176,47 @@ with st.sidebar:
         options=["Overview", "Data Explorer", "FL Training",
                  "Baseline Comparison", "Performance Comparison",
                  "Privacy Analysis", "Credit Predictor"],
-        icons=["building", "bar-chart-line", "gear", "bar-chart",
-               "trophy", "shield-lock", "credit-card"],
+        icons=["speedometer2", "database", "cpu", "arrow-left-right",
+               "graph-up-arrow", "shield-lock-fill", "credit-card-2-front"],
         default_index=0,
         styles={
-            "container": {"padding":"0","background-color":"transparent"},
-            "icon": {"font-size":"14px"},
-            "nav-link": {"font-size":"13px","padding":"6px 12px"},
-            "nav-link-selected": {"background-color":"#1e3a5f"},
+            "container":         {"padding": "0", "background-color": "transparent"},
+            "icon":              {"font-size": "16px", "color": "#64748b",
+                                  "min-width": "20px"},
+            "nav-link":          {"font-size": "0.85rem", "padding": "10px 14px",
+                                  "color": "#94a3b8", "border-radius": "8px",
+                                  "margin": "2px 0",
+                                  "--hover-color": "rgba(212,165,116,0.10)"},
+            "nav-link-selected": {"background-color": "rgba(56,189,248,0.12)",
+                                  "color": "#38bdf8", "font-weight": "600"},
         },
     )
     st.divider()
 
-    st.markdown(f'{icon("fa-layer-group")} **Training Mode**', unsafe_allow_html=True)
-    training_mode = st.selectbox(
-        "Mode",
-        options=["fedavg_dp", "fedavg", "fedprox_dp", "centralized"],
-        format_func=lambda m: {
-            "centralized": "Centralized (no FL)",
-            "fedavg":      "FedAvg (no DP)",
-            "fedavg_dp":   "FedAvg + DP",
-            "fedprox_dp":  "FedProx + DP",
-        }[m],
-        index=0,
-        key="sidebar_mode",
+    # User info + Logout
+    st.markdown(
+        f'{icon("fa-circle-user")} '
+        '<span style="color:#94a3b8;font-size:0.85rem;">admin</span>',
+        unsafe_allow_html=True,
     )
+    if st.button("Logout", key="logout_btn", use_container_width=True):
+        for k in list(st.session_state.keys()):
+            del st.session_state[k]
+        st.rerun()
 
- 
-    st.markdown(f'{icon("fa-gear")} **FL Config**', unsafe_allow_html=True)
-    sel_banks    = st.multiselect("Banks", list(BANK_PROFILES.keys()),
-                                  default=["SBI", "HDFC", "Axis", "PNB", "ICICI"])
-    num_rounds   = st.slider("FL Rounds",    3, 15, 8)
-    local_epochs = st.slider("Local Epochs", 1,  5, 2)
-    lr           = st.select_slider("Learning Rate",
-                                    [0.0001, 0.001, 0.005, 0.01], value=0.001)
+training_mode = st.session_state.get("training_mode", "fedavg_dp")
+sel_banks     = st.session_state.get("sel_banks", ["SBI", "HDFC", "Axis", "PNB", "ICICI"])
+num_rounds    = st.session_state.get("num_rounds", 8)
+local_epochs  = st.session_state.get("local_epochs", 2)
+lr            = st.session_state.get("lr", 0.001)
+fl_backend    = st.session_state.get("fl_backend", "custom")
+noise_mult    = st.session_state.get("noise_mult", 1.1)
+max_norm      = st.session_state.get("max_norm", 1.0)
+dp_backend    = st.session_state.get("dp_backend", "custom")
+mu_fedprox    = st.session_state.get("mu_fedprox", 0.01)
 
-    fl_backend = st.selectbox(
-        "FL Backend",
-        options=["custom", "flower"],
-        format_func=lambda b: "Custom Loop" if b == "custom" else "Flower Framework",
-        help="Custom: pure PyTorch loop. Flower: uses flwr.simulation.",
-    )
-    st.divider()
-
-   
-    use_dp = training_mode in ("fedavg_dp", "fedprox_dp")
-    st.markdown(f'{icon("fa-shield-halved")} **Privacy Config**', unsafe_allow_html=True)
-    dp_on_display = "ON" if use_dp else "OFF (mode selection controls this)"
-    st.caption(f"DP: {dp_on_display}")
-
-    noise_mult = st.slider("Noise Multiplier (sigma)", 0.5, 2.0, 1.1, 0.1,
-                            disabled=not use_dp)
-    max_norm   = st.slider("Max Grad Norm (C)",         0.5, 2.0, 1.0, 0.1,
-                            disabled=not use_dp)
-    dp_backend = st.selectbox(
-        "DP Backend",
-        options=["custom", "opacus"],
-        format_func=lambda b: "Custom (Manual)" if b == "custom" else "Opacus PrivacyEngine",
-        disabled=not use_dp,
-        help="Opacus requires: pip install opacus>=1.4.0",
-    )
-    st.divider()
-
-
-    use_fedprox = training_mode == "fedprox_dp"
-    st.markdown(f'{icon("fa-sliders")} **FedProx Config**', unsafe_allow_html=True)
-    st.caption("FedProx: " + ("ON" if use_fedprox else "OFF (mode selection controls this)"))
-    mu_fedprox = st.slider(
-        "Proximal mu", 0.001, 0.5, 0.01, 0.001,
-        format="%.3f", disabled=not use_fedprox,
-        help="Higher mu = local models stay closer to global = more stable on Non-IID data.",
-    )
+use_dp = training_mode in ("fedavg_dp", "fedprox_dp")
+use_fedprox = training_mode == "fedprox_dp"
 
 
 def render_log_tab(logger: FLLogger):
@@ -243,6 +289,110 @@ if page == "Overview":
     c2.markdown(f'<div class="kpi"><div class="kpi-val">{total:,}</div><div class="kpi-lbl">Total Samples</div></div>', unsafe_allow_html=True)
     c3.markdown(f'<div class="kpi"><div class="kpi-val">epsilon~2.0</div><div class="kpi-lbl">Privacy Budget</div></div>', unsafe_allow_html=True)
     c4.markdown(f'<div class="kpi"><div class="kpi-val">0 bytes</div><div class="kpi-lbl">Raw Data Shared</div></div>', unsafe_allow_html=True)
+
+    st.divider()
+    icon_header("fa-sliders", "Experiment Configuration", level=3)
+    
+    st.markdown(
+        """
+        <style>
+        /* ---- Experiment Configuration Tabs ---- */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 8px;
+            background-color: transparent;
+            border-bottom: 2px solid #1e293b;
+            padding-bottom: 0;
+        }
+        .stTabs [data-baseweb="tab"] {
+            height: 44px;
+            white-space: pre-wrap;
+            background-color: #162032;
+            border-radius: 8px 8px 0 0;
+            padding: 10px 20px;
+            color: #b0bec5 !important;
+            font-weight: 500;
+            border: 1px solid #263348;
+            border-bottom: none;
+            transition: all 0.3s ease;
+        }
+        .stTabs [data-baseweb="tab"]:hover {
+            background-color: #1e3a5f;
+            color: #e2c799 !important;
+            border-color: #d4a574;
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: #1e3a5f !important;
+            color: #e8c98e !important;
+            font-weight: 700;
+            border: 1px solid #c9956b !important;
+            border-bottom: 3px solid #d4a574 !important;
+            box-shadow: 0 -2px 8px rgba(212,165,116,0.15);
+        }
+        .stTabs [data-baseweb="tab-panel"] {
+            padding-top: 16px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    tab_gen, tab_fl, tab_dp = st.tabs(["General Settings", "FL Settings", "Privacy Settings"])
+    
+    with tab_gen:
+        st.markdown("")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.selectbox(
+                "Training Mode",
+                options=["fedavg_dp", "fedavg", "fedprox_dp", "centralized"],
+                format_func=lambda m: {
+                    "centralized": "Centralized (no FL)",
+                    "fedavg":      "FedAvg (no DP)",
+                    "fedavg_dp":   "FedAvg + DP",
+                    "fedprox_dp":  "FedProx + DP",
+                }[m],
+                key="training_mode",
+            )
+        with col2:
+            st.multiselect("Participating Banks", list(BANK_PROFILES.keys()), key="sel_banks")
+
+    with tab_fl:
+        st.markdown("")
+        fc1, fc2, fc3, fc4 = st.columns(4)
+        with fc1:
+            st.slider("FL Rounds", 3, 15, key="num_rounds")
+        with fc2:
+            st.slider("Local Epochs", 1, 5, key="local_epochs")
+        with fc3:
+            st.select_slider("Learning Rate", [0.0001, 0.001, 0.005, 0.01], key="lr")
+        with fc4:
+            st.selectbox(
+                "FL Backend",
+                options=["custom", "flower"],
+                format_func=lambda b: "Custom Loop" if b == "custom" else "Flower Framework",
+                key="fl_backend"
+            )
+
+    with tab_dp:
+        st.markdown("")
+        use_dp_tab = st.session_state["training_mode"] in ("fedavg_dp", "fedprox_dp")
+        use_fedprox_tab = st.session_state["training_mode"] == "fedprox_dp"
+        
+        pc1, pc2, pc3 = st.columns(3)
+        with pc1:
+            st.slider("Noise Multiplier (sigma)", 0.5, 2.0, step=0.1, key="noise_mult", disabled=not use_dp_tab)
+            st.slider("Max Grad Norm (C)", 0.5, 2.0, step=0.1, key="max_norm", disabled=not use_dp_tab)
+        with pc2:
+            st.selectbox(
+                "DP Backend",
+                options=["custom", "opacus"],
+                format_func=lambda b: "Custom (Manual)" if b == "custom" else "Opacus PrivacyEngine",
+                disabled=not use_dp_tab,
+                key="dp_backend"
+            )
+            st.slider("Proximal mu (FedProx)", 0.001, 0.5, step=0.001, key="mu_fedprox", format="%.3f", disabled=not use_fedprox_tab)
+        with pc3:
+            st.info("Differential Privacy (DP) protects the gradient updates during training. Ensure Training Mode includes DP.")
 
 
 elif page == "Data Explorer":
