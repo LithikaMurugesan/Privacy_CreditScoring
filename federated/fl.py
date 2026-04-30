@@ -1,4 +1,3 @@
-
 import copy
 import torch
 import torch.nn as nn
@@ -33,7 +32,6 @@ def local_train(
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
     criterion = nn.BCELoss()
 
-    # Keep a frozen snapshot of the global model for FedProx distance computation
     if use_fedprox and global_model is not None:
         global_snapshot = copy.deepcopy(global_model)
         for p in global_snapshot.parameters():

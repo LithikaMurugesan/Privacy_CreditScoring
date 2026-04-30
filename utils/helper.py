@@ -70,14 +70,8 @@ def local_train(
 
     return avg_loss, len(df), scaler
 
-
-
-# ═════════════════════════════════════════════════════════════════════════════
-# MODEL EVALUATION
-# ═════════════════════════════════════════════════════════════════════════════
-
 def evaluate_model(model, df, scaler):
-    # Transform data using same scaler
+
     X = scaler.transform(df[FEATURE_NAMES].values).astype(np.float32)
     y = df["default"].values
 
@@ -92,6 +86,6 @@ def evaluate_model(model, df, scaler):
     try:
         auc = roc_auc_score(y, probs)
     except:
-        auc = 0.5  # fallback if AUC fails
+        auc = 0.5
 
     return acc, auc

@@ -1,4 +1,3 @@
-
 import logging
 import numpy as np
 from src.federated.fl_engine import FLEngine
@@ -17,7 +16,6 @@ def run_comparison(
     mu: float = 0.01,
     fl_backend: str = "custom",
     dp_backend: str = "custom",
-    verbose: bool = True,
 ) -> list:
    
     if all_data is None:
@@ -38,20 +36,7 @@ def run_comparison(
         ("fedprox_dp",  "FedProx + DP",             "DP + FedProx",   "Weights only"),
     ]
 
-    if verbose:
-        print("\n" + "=" * 65)
-        print("  PERFORMANCE COMPARISON — FL Credit Scoring")
-        print("=" * 65)
-        print(f"  Banks      : {banks}")
-        print(f"  FL rounds  : {num_rounds}, Local epochs: {local_epochs}, LR: {lr}")
-        print(f"  DP         : noise={noise_mult}, max_norm={max_norm}")
-        print(f"  FedProx mu : {mu}")
-        print(f"  FL backend : {fl_backend}, DP backend: {dp_backend}")
-        print("-" * 65)
-
     for i, (mode_key, label, privacy_label, data_shared) in enumerate(modes, 1):
-        if verbose:
-            print(f"  [{i}/4] Running {label} ...")
 
         try:
             result = engine.run(
@@ -79,15 +64,6 @@ def run_comparison(
             }
             results.append(row)
 
-            if verbose:
-                eps_str = f"  epsilon={eps:.3f}" if eps > 0 else ""
-                print(
-                    f"  {label:25s} "
-                    f"acc={result['final_acc']:.4f}  "
-                    f"auc={result['final_auc']:.4f}"
-                    f"{eps_str}"
-                )
-
         except Exception as e:
             logger.error(f"Error running mode {mode_key}: {e}")
             results.append({
@@ -99,9 +75,5 @@ def run_comparison(
                 "Epsilon":    None,
                 "Error":      str(e),
             })
-
-    if verbose:
-        print("-" * 65)
-        print("  Comparison complete.\n")
 
     return results

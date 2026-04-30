@@ -1,33 +1,9 @@
-"""
-src/federated/strategies.py
-============================
-Custom Flower server strategies: FedAvg and FedProx.
-
-In Flower, a 'strategy' defines HOW the server aggregates client updates.
-We extend Flower's built-in FedAvg strategy with:
-  - Metric logging (accuracy, AUC from clients)
-  - FedProx support (sends mu to clients via config)
-
-How FedProx works in Flower:
-  - The server sends mu (proximal coefficient) in the fit_config.
-  - Each client uses mu to compute the FedProx proximal term during training.
-  - The aggregation itself is still standard FedAvg (weighted average).
-  - The benefit is in reduced client drift — not in the aggregation step.
-
-References
-----------
-  - McMahan et al. (2017) "Communication-Efficient Learning of Deep Networks
-    from Decentralized Data" [FedAvg]
-  - Li et al. (2020) "Federated Optimization in Heterogeneous Networks" [FedProx]
-"""
-
 import logging
 from typing import Dict, List, Optional, Tuple, Union
 import numpy as np
 
 logger = logging.getLogger(__name__)
 
-# Try importing Flower
 try:
     import flwr as fl
     from flwr.common import (
@@ -87,7 +63,6 @@ def get_fedavg_strategy(
             for k, v in m.items():
                 if isinstance(v, (int, float)):
                     agg[k] = agg.get(k, 0.0) + (n / total) * v
-        # Log to FLLogger if provided
         if metrics_logger and "accuracy" in agg:
             logger.info(f"  Aggregated fit metrics: {agg}")
         return agg

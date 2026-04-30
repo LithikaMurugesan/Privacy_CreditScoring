@@ -1,18 +1,3 @@
-"""
-src/utils/helpers.py
-====================
-Consolidated training and evaluation utilities.
-
-This is the canonical module for:
-  - local_train()   — one bank, one FL round (supports FedAvg + FedProx + DP)
-  - evaluate_model() — accuracy + AUC-ROC on a dataset
-
-Previously, equivalent functions existed in BOTH utils/helper.py and
-federated/fl.py — that duplication is now eliminated here.
-
-All federated training code imports from this module.
-"""
-
 import copy
 import logging
 
@@ -27,10 +12,6 @@ from src.data.data_generator import FEATURE_NAMES
 
 logger = logging.getLogger(__name__)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# FedProx proximal regularisation term
-# ─────────────────────────────────────────────────────────────────────────────
 
 def fedprox_loss(
     local_model: nn.Module,
@@ -65,10 +46,6 @@ def fedprox_loss(
         prox = prox + torch.norm(p_local - p_global.detach()) ** 2
     return (mu / 2.0) * prox
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# LOCAL TRAIN — one bank, one FL round
-# ─────────────────────────────────────────────────────────────────────────────
 
 def local_train(
     model: nn.Module,
@@ -115,7 +92,7 @@ def local_train(
       n_samples  : int          — number of training samples
       scaler     : StandardScaler — fitted scaler (needed for evaluation)
     """
-    # ── Data preparation ─────────────────────────────────────────────────
+
     scaler = StandardScaler()
     X = scaler.fit_transform(df[FEATURE_NAMES].values).astype(np.float32)
     y = df["default"].values.astype(np.float32)
@@ -126,7 +103,6 @@ def local_train(
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
     criterion = nn.BCELoss()
 
-    # ── Opacus setup (if requested) ──────────────────────────────────────
     if use_dp and dp_backend == "opacus":
         from src.privacy.dp_manager import DPManager
         dm = DPManager(
@@ -140,7 +116,7 @@ def local_train(
             logger.warning(f"Opacus setup failed ({e}), falling back to custom DP.")
             dp_backend = "custom"
 
-    # ── FedProx: freeze global model snapshot ───────────────────────────
+  
     if use_fedprox and global_model is not None:
         global_snapshot = copy.deepcopy(global_model)
         for p in global_snapshot.parameters():
@@ -148,7 +124,6 @@ def local_train(
     else:
         global_snapshot = None
 
-    # ── Training loop ────────────────────────────────────────────────────
     model.train()
     total_loss = 0.0
     steps      = 0
@@ -160,13 +135,11 @@ def local_train(
             out  = model(Xb)
             loss = criterion(out, yb)
 
-            # FedProx: add proximal regularisation term
             if use_fedprox and global_snapshot is not None:
                 loss = loss + fedprox_loss(model, global_snapshot, mu)
 
             loss.backward()
 
-            # Custom DP: clip + noise (applied after backward, before step)
             if use_dp and dp_backend == "custom":
                 from src.privacy.dp_custom import clip_gradients, add_dp_noise
                 clip_gradients(model, max_norm)
@@ -180,9 +153,6 @@ def local_train(
     return avg_loss, len(df), scaler
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# MODEL EVALUATION
-# ─────────────────────────────────────────────────────────────────────────────
 
 def evaluate_model(
     model: nn.Module,
@@ -219,10 +189,6 @@ def evaluate_model(
 
     return float(acc), float(auc)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
-# FEDERATED AVERAGING (FedAvg)
-# ─────────────────────────────────────────────────────────────────────────────
 
 def fed_avg(client_weights: list, client_sizes: list) -> list:
     """

@@ -1,34 +1,3 @@
-"""
-src/federated/flower_simulation.py
-====================================
-Flower in-process simulation runner.
-
-Why simulation instead of a real Flower server?
-  A real Flower server needs multiple processes (one per client + one server),
-  separate ports, and gRPC connections. This works in production but is
-  incompatible with Streamlit (which runs everything in a single process).
-
-  flwr.simulation.start_simulation() runs all clients and the server in a
-  single Python process using virtual actors (Ray or threading). The FL
-  algorithm is identical — only the transport layer changes.
-
-  This gives us:
-    - Real Flower code (NumPyClient, strategies, server config)
-    - Streamlit compatibility (no subprocess, no ports)
-    - Correct FL semantics (clients don't share data, only weights)
-
-Usage:
-    results = run_flower_simulation(
-        banks=["SBI", "HDFC", "Axis"],
-        all_data=all_data,
-        num_rounds=8,
-        config={...},
-        use_fedprox=False,
-    )
-    # results["history"] → Flower History object
-    # results["metrics"] → dict of final metrics
-"""
-
 import logging
 import copy
 import numpy as np
@@ -40,7 +9,6 @@ from sklearn.preprocessing import StandardScaler
 
 logger = logging.getLogger(__name__)
 
-# Try importing Flower
 try:
     import flwr as fl
     from flwr.common import ndarrays_to_parameters
@@ -93,11 +61,9 @@ def run_flower_simulation(
             metrics_logger, progress_callback
         )
 
-    # ── Build initial global model parameters ───────────────────────────
     initial_model  = CreditNet(input_dim=10)
     initial_params = ndarrays_to_parameters(weights_to_numpy(initial_model))
 
-    # ── Build strategy ───────────────────────────────────────────────────
     from src.federated.strategies import get_fedavg_strategy, get_fedprox_strategy
 
     fit_config = {
@@ -128,11 +94,9 @@ def run_flower_simulation(
 
     strategy = strategy_builder(**strategy_kwargs)
 
-    # ── Build client factory ─────────────────────────────────────────────
     from src.federated.flower_client import make_flower_client_fn
     client_fn = make_flower_client_fn(data_subset, cfg)
 
-    # ── Run simulation ───────────────────────────────────────────────────
     logger.info(
         f"Starting Flower simulation — {len(banks)} banks, "
         f"{num_rounds} rounds, {'FedProx' if use_fedprox else 'FedAvg'}"
@@ -152,10 +116,7 @@ def run_flower_simulation(
             metrics_logger, progress_callback
         )
 
-    # ── Extract final metrics ─────────────────────────────────────────────
-    # Rebuild model from last round aggregated parameters
     global_model = CreditNet(input_dim=10)
-    # Evaluate on all banks and macro-average
     accs, aucs = [], []
     for b in banks:
         sc = StandardScaler()
@@ -164,7 +125,6 @@ def run_flower_simulation(
         accs.append(acc)
         aucs.append(auc)
 
-    # Get epsilon from last round (if DP was used)
     from src.privacy.dp_custom import compute_epsilon
     use_dp = cfg.get("use_dp", False)
     if use_dp:
@@ -183,10 +143,6 @@ def run_flower_simulation(
     }
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Custom FL fallback (used when Flower is not installed)
-# Implements the same FedAvg/FedProx loop without Flower dependency.
-# ─────────────────────────────────────────────────────────────────────────────
 
 def _run_custom_fallback(
     banks, all_data, num_rounds, cfg, use_fedprox, mu,

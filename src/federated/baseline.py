@@ -1,20 +1,3 @@
-"""
-src/federated/baseline.py
-=========================
-Centralized and local-only baseline trainers.
-
-Used for comparison:
-  - Centralized: all banks pool data → one model (no privacy, upper bound)
-  - Local-only: each bank trains in isolation (no FL, lower bound)
-
-The performance gap between Centralized and Local-only defines the room
-where our FL+DP model should fall:
-    Centralized acc > FL+DP acc > Local-only acc
-
-This gap represents the cost of Differential Privacy and the benefit of
-Federated Learning respectively.
-"""
-
 import numpy as np
 import pandas as pd
 import torch
@@ -55,7 +38,6 @@ def train_centralized_baseline(
     -------
     dict with keys: model, scaler, history, final_acc, final_auc, n_samples, banks_used
     """
-    # Pool all selected banks' data (shuffle to avoid ordering effects)
     frames = [all_data[b] for b in selected_banks if b in all_data]
     df_all = pd.concat(frames, ignore_index=True).sample(frac=1, random_state=42)
 
@@ -63,7 +45,6 @@ def train_centralized_baseline(
     X = scaler.fit_transform(df_all[FEATURE_NAMES].values).astype(np.float32)
     y = df_all["default"].values.astype(np.float32)
 
-    # 80/20 train/val split
     split       = int(0.8 * len(X))
     X_tr, X_val = X[:split], X[split:]
     y_tr, y_val = y[:split], y[split:]

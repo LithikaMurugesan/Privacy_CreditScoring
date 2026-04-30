@@ -3,7 +3,6 @@ import pandas as pd
 import io
 from datetime import datetime
 
-
 class FLLogger:
     """
     Stores per-round, per-bank training metrics as a structured log.

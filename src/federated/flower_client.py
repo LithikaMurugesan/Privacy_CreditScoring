@@ -1,25 +1,3 @@
-"""
-src/federated/flower_client.py
-==============================
-Flower NumPyClient implementation for each bank.
-
-In the Flower framework, each client:
-  1. Receives global model weights from the server (set_parameters)
-  2. Trains locally on its own data (fit)
-  3. Returns updated weights + metrics to the server (fit return)
-  4. Evaluates the global model locally (evaluate)
-
-Non-IID handling:
-  Each bank's client is initialised with ONLY that bank's dataset partition.
-  No data is ever shared — only model weights travel between client and server.
-  This is the core privacy guarantee of Federated Learning.
-
-The CreditFlowerClient supports:
-  - FedAvg (plain local training)
-  - FedAvg + DP (custom or Opacus)
-  - FedProx + DP (proximal regularisation for Non-IID stability)
-"""
-
 import copy
 import logging
 from typing import Dict, List, Tuple, Optional
@@ -34,7 +12,6 @@ from src.data.data_generator import FEATURE_NAMES, BANK_PROFILES
 
 logger = logging.getLogger(__name__)
 
-# Try importing Flower — fail gracefully
 try:
     import flwr as fl
     FLOWER_AVAILABLE = True
@@ -63,7 +40,6 @@ class CreditFlowerClient:
         self.config     = config
         self.model      = CreditNet(input_dim=10)
 
-        # Fit scaler on local data (never shared)
         from sklearn.preprocessing import StandardScaler
         self.scaler = StandardScaler()
         self.scaler.fit(bank_data[FEATURE_NAMES].values)
@@ -97,7 +73,6 @@ class CreditFlowerClient:
         """
         self.set_parameters(parameters)
 
-        # Merge global config with client config
         local_epochs = config.get("local_epochs", self.config.get("local_epochs", 2))
         lr           = config.get("lr", self.config.get("lr", 0.001))
         use_dp       = config.get("use_dp", self.config.get("use_dp", False))
@@ -107,7 +82,6 @@ class CreditFlowerClient:
         mu           = config.get("mu", self.config.get("mu", 0.01))
         dp_backend   = config.get("dp_backend", self.config.get("dp_backend", "custom"))
 
-        # Keep a copy of global model for FedProx proximal term
         global_model_ref = copy.deepcopy(self.model) if use_fedprox else None
 
         loss, n_samples, _ = local_train(
@@ -124,7 +98,6 @@ class CreditFlowerClient:
             dp_backend   = dp_backend,
         )
 
-        # Compute local accuracy and AUC for reporting
         acc, auc = evaluate_model(self.model, self.bank_data, self.scaler)
 
         metrics = {
@@ -159,7 +132,6 @@ class CreditFlowerClient:
         self.set_parameters(parameters)
         acc, auc = evaluate_model(self.model, self.bank_data, self.scaler)
 
-        # Approximate cross-entropy loss from accuracy (or compute directly)
         loss = 1.0 - acc
 
         return float(loss), len(self.bank_data), {
@@ -206,7 +178,6 @@ def make_flower_client_fn(all_data: dict, config: dict):
             return _FlwrClient(cid)
 
     else:
-        # Fallback when Flower is not installed
         def client_fn(cid: str):
             bank_name = banks[int(cid) % len(banks)]
             return CreditFlowerClient(bank_name, all_data[bank_name], config)

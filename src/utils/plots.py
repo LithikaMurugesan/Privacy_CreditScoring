@@ -1,45 +1,9 @@
-"""
-src/utils/plots.py
-==================
-All Plotly chart builders for the Streamlit dashboard.
-
-Each function takes data arguments and returns a go.Figure — no Streamlit
-calls inside this module so it can be used by report-generation scripts too.
-
-Charts available:
-  FL Training:
-    fl_accuracy_chart()      — local + global accuracy per round
-    fl_loss_chart()          — per-bank training loss per round
-    auc_vs_epsilon_chart()   — AUC vs privacy budget (dual axis)
-
-  Baseline Comparison:
-    baseline_comparison_bar()   — Centralized vs FL+DP vs Local-only
-    baseline_learning_curve()   — Centralized train/val curves
-
-  Privacy Analysis:
-    epsilon_vs_accuracy_curve()  — tradeoff curve
-    epsilon_budget_bars()        — budget consumption per round
-    privacy_tradeoff_scatter()   — NEW: scatter of modes (ε vs accuracy)
-
-  Data Explorer:
-    income_distribution()    — histogram per bank
-    default_rate_bars()      — bar chart of default rates
-    dataset_size_pie()       — donut chart of dataset sizes
-    correlation_heatmap()    — feature correlation for one bank
-
-  Performance Comparison:
-    mode_comparison_bar()    — NEW: bar for all 4 training modes (accuracy)
-    mode_comparison_auc()    — NEW: bar for all 4 training modes (AUC)
-"""
-
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Constants
-# ─────────────────────────────────────────────────────────────────────────────
+
 BANK_COLORS = {
     "SBI":   "#f97316",
     "HDFC":  "#3b82f6",
@@ -59,9 +23,6 @@ MODE_COLORS = {
 _DARK = "plotly_dark"
 
 
-# ═════════════════════════════════════════════════════════════════════════════
-# FL TRAINING CHARTS
-# ═════════════════════════════════════════════════════════════════════════════
 
 def fl_accuracy_chart(history: dict, global_acc: list, sel_banks: list) -> go.Figure:
     """
@@ -148,11 +109,6 @@ def auc_vs_epsilon_chart(global_auc: list, epsilon_log: list) -> go.Figure:
     )
     return fig
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# BASELINE COMPARISON CHARTS
-# ═════════════════════════════════════════════════════════════════════════════
-
 def baseline_comparison_bar(
     fl_acc: float,
     central_acc: float,
@@ -213,11 +169,6 @@ def baseline_learning_curve(history: dict) -> go.Figure:
     )
     return fig
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# PERFORMANCE COMPARISON CHARTS  (NEW)
-# ═════════════════════════════════════════════════════════════════════════════
-
 def mode_comparison_bar(rows: list, metric: str = "Accuracy") -> go.Figure:
     """
     Bar chart comparing all 4 training modes on a given metric.
@@ -266,7 +217,6 @@ def privacy_tradeoff_scatter(rows: list) -> go.Figure:
         acc = r.get("Accuracy", 0)
         method = r.get("Method", "")
 
-        # Modes without DP are shown at epsilon=10 (placeholder for "infinite")
         x_val = eps if eps is not None else 10.0
         label = f"epsilon={eps:.2f}" if eps is not None else "No DP"
 
@@ -280,7 +230,7 @@ def privacy_tradeoff_scatter(rows: list) -> go.Figure:
             hovertemplate=f"<b>{method}</b><br>epsilon={label}<br>Accuracy={acc:.2%}<extra></extra>",
         ))
 
-    # Add privacy zones as background
+   
     fig.add_vrect(x0=0, x1=3, fillcolor="#22c55e", opacity=0.05,
                   annotation_text="Strong Privacy Zone", annotation_position="top left")
     fig.add_vrect(x0=3, x1=7, fillcolor="#f97316", opacity=0.05,
@@ -296,11 +246,6 @@ def privacy_tradeoff_scatter(rows: list) -> go.Figure:
         showlegend=False,
     )
     return fig
-
-
-# ═════════════════════════════════════════════════════════════════════════════
-# PRIVACY ANALYSIS CHARTS
-# ═════════════════════════════════════════════════════════════════════════════
 
 def epsilon_vs_accuracy_curve(current_eps: float = None) -> go.Figure:
     """Theoretical epsilon vs accuracy curve with current epsilon marker."""
@@ -353,10 +298,6 @@ def epsilon_budget_bars(epsilon_log: list, budget_limit: float) -> go.Figure:
     )
     return fig
 
-
-# ═════════════════════════════════════════════════════════════════════════════
-# DATA EXPLORER CHARTS
-# ═════════════════════════════════════════════════════════════════════════════
 
 def income_distribution(all_data: dict) -> go.Figure:
     """Overlapping income histograms — shows Non-IID nature of bank data."""

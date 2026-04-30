@@ -1,7 +1,6 @@
 import torch
 import numpy as np
 
-
 def clip_gradients(model, max_norm):
     total_norm = 0.0
 
@@ -24,8 +23,6 @@ def add_dp_noise(model, noise_multiplier, max_norm, batch_size):
         if p.grad is not None:
             noise = torch.randn_like(p.grad) * (noise_multiplier * max_norm / batch_size)
             p.grad.data.add_(noise)
-
-
 
 def compute_epsilon(noise_multiplier, sample_rate, num_steps, delta=1e-5):
     if noise_multiplier <= 0:

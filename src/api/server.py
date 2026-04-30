@@ -1,36 +1,8 @@
-"""
-src/api/server.py
-=================
-FastAPI REST API for credit score prediction.
-
-Endpoints:
-  GET  /          — health check + API info
-  POST /predict   — predict credit score from customer features
-  GET  /model/info — model architecture info
-
-The API loads the trained model from experiments/results/ if available,
-otherwise uses a freshly initialized CreditNet (untrained, for demo only).
-
-Running the API:
-    python run_api.py
-    # or: uvicorn src.api.server:app --host 0.0.0.0 --port 8000
-
-Testing with curl:
-    curl -X POST http://localhost:8000/predict \\
-      -H "Content-Type: application/json" \\
-      -d '{"income": 50000, "age": 35, "loan_amount": 200000,
-           "loan_tenure": 36, "existing_loans": 1,
-           "on_time_ratio": 0.85, "credit_utilization": 0.3,
-           "employment_score": 0.75, "savings_ratio": 0.2,
-           "num_enquiries": 1}'
-"""
-
 import os
 import numpy as np
 import torch
 from sklearn.preprocessing import StandardScaler
 
-# FastAPI — graceful fallback if not installed
 try:
     from fastapi import FastAPI, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
@@ -45,9 +17,6 @@ from src.models.model import CreditNet
 from src.data.data_generator import FEATURE_NAMES, load_all_data
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Request / Response schemas
-# ─────────────────────────────────────────────────────────────────────────────
 
 if FASTAPI_AVAILABLE:
     class PredictRequest(BaseModel):
@@ -73,9 +42,6 @@ if FASTAPI_AVAILABLE:
         model_source:    str
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Helper functions
-# ─────────────────────────────────────────────────────────────────────────────
 
 def prob_to_cibil(prob: float) -> int:
     """Convert default probability [0,1] to CIBIL score [300,900]."""
@@ -106,7 +72,6 @@ def load_model_and_scaler():
     model = CreditNet(input_dim=10)
     model_source = "untrained (demo)"
 
-    # Try to load saved model
     model_path = os.path.join("experiments", "results", "best_model.pt")
     if os.path.exists(model_path):
         try:
@@ -114,9 +79,7 @@ def load_model_and_scaler():
             model.load_state_dict(state)
             model_source = f"trained ({model_path})"
         except Exception as e:
-            pass  # Fall through to untrained
-
-    # Fit scaler on HDFC data (balanced distribution)
+            pass
     all_data = load_all_data()
     scaler   = StandardScaler()
     scaler.fit(all_data["HDFC"][FEATURE_NAMES].values)
@@ -124,9 +87,6 @@ def load_model_and_scaler():
     return model, scaler, model_source
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# FastAPI App
-# ─────────────────────────────────────────────────────────────────────────────
 
 if FASTAPI_AVAILABLE:
     app = FastAPI(
@@ -139,7 +99,7 @@ if FASTAPI_AVAILABLE:
         version="1.0.0",
     )
 
-    # CORS — allow Streamlit dashboard to call this API
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -147,7 +107,7 @@ if FASTAPI_AVAILABLE:
         allow_headers=["*"],
     )
 
-    # Load model once at startup
+  
     _model, _scaler, _model_source = load_model_and_scaler()
     _model.eval()
 

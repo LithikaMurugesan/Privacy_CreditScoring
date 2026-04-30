@@ -17,7 +17,7 @@ def train_centralized_baseline(
     epochs: int = 15,
     lr: float = 0.001,
     batch_size: int = 64,
-    progress_cb=None,          # optional callback(epoch, total, loss, acc, auc)
+    progress_cb=None,
 ) -> dict:
     """
     Pool all selected banks' data → train one model centrally (no DP, no FL).

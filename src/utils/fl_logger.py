@@ -1,21 +1,3 @@
-"""
-src/utils/fl_logger.py
-======================
-Structured Federated Learning logger.
-
-Collects per-round, per-bank training metrics and global model metrics.
-Supports:
-  - CSV export (per-client, global, combined)
-  - Human-readable round summaries
-  - Auto-save to experiments/results/ directory
-
-Usage:
-    logger = FLLogger(experiment_name="fedavg_dp_run1")
-    logger.log_client(round=1, bank="SBI", acc=0.82, auc=0.87, ...)
-    logger.log_global(round=1, g_acc=0.84, g_auc=0.88, epsilon=1.2)
-    logger.save_to_disk()   # saves CSVs to experiments/results/
-"""
-
 import os
 import pandas as pd
 from datetime import datetime
@@ -45,7 +27,7 @@ class FLLogger:
         self.save_dir   = save_dir
         self.experiment_name = experiment_name or datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    # ── Per-bank log ────────────────────────────────────────────────────────
+
     def log_client(
         self,
         round_num: int,
@@ -68,7 +50,7 @@ class FLLogger:
             "timestamp": datetime.now().strftime("%H:%M:%S"),
         })
 
-    # ── Global model log ────────────────────────────────────────────────────
+
     def log_global(
         self,
         round_num: int,
@@ -88,7 +70,7 @@ class FLLogger:
             "timestamp":  datetime.now().strftime("%H:%M:%S"),
         })
 
-    # ── DataFrames ──────────────────────────────────────────────────────────
+    
     def client_df(self) -> pd.DataFrame:
         """Return per-bank records as a DataFrame."""
         return pd.DataFrame(self.records) if self.records else pd.DataFrame()
@@ -97,7 +79,7 @@ class FLLogger:
         """Return global model records as a DataFrame."""
         return pd.DataFrame(self.g_records) if self.g_records else pd.DataFrame()
 
-    # ── CSV export ──────────────────────────────────────────────────────────
+
     def client_csv(self) -> bytes:
         """Encode per-bank DataFrame as CSV bytes for download."""
         return self.client_df().to_csv(index=False).encode()
@@ -142,7 +124,6 @@ class FLLogger:
 
         return self.save_dir
 
-    # ── Summary ─────────────────────────────────────────────────────────────
     def summary(self) -> dict:
         """Return a summary dict of the training run."""
         if not self.g_records:
@@ -162,7 +143,6 @@ class FLLogger:
             "experiment_name":  self.experiment_name,
         }
 
-    # ── Human-readable round log lines ──────────────────────────────────────
     def round_lines(self, round_num: int) -> list:
         """Return log lines for a single FL round (for display in terminal/UI)."""
         lines = [f"=== Round {round_num} ==="]
